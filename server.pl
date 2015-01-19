@@ -20,7 +20,7 @@ $handler->listen(
    extensions => ['SSL'],
    SSL_key_file => 'web.key',
    SSL_cert_file => 'web.pem',
-   SSL_verify_mode => SSL_VERIFY_PEER,
+   SSL_verify_mode => SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT,
    SSL_ca_file => 'rootCA.pem',
    host => '0.0.0.0',
    service => 8000,
