@@ -1,3 +1,24 @@
+client.pem: class2CA.pem
+	openssl genrsa -out client.key 4096
+	openssl req \
+   -new \
+   -key client.key \
+   -out client.csr \
+   -subj /CN=127.0.0.1
+	openssl ca \
+   -keyfile class2CA.key \
+   -cert class2CA.pem \
+   -extensions usr_cert \
+   -notext \
+   -md sha256 \
+   -in client.csr \
+   -out client.pem \
+   -batch \
+   -config openssl.cnf
+	cat client.pem class2CA.pem rootCA.pem > client.pem.new
+	rm client.pem
+	mv client.pem.new client.pem
+
 web.pem: class2CA.pem
 	openssl genrsa -out web.key 4096
 	openssl req \

@@ -3,34 +3,19 @@
 use strict;
 use warnings;
 
-use IO::Async::Loop;
-use IO::Async::SSL;
-use IO::Async::SSLStream;
 use IO::Socket::SSL;
-use Net::Async::HTTP::Server::PSGI;
-use Plack::App::Directory;
+my $server = IO::Socket::SSL->new(
+    LocalAddr => '0.0.0.0',
+    LocalPort => 8000,
+    Listen => 10,
 
-my $loop = IO::Async::Loop->new;
-my $handler = Net::Async::HTTP::Server::PSGI->new(
-   app => Plack::App::Directory->new({ root => '.' }),
-);
+    # which certificate to offer
+    # with SNI support there can be different certificates per hostname
+    SSL_cert_file => 'web.pem',
+    SSL_key_file => 'web.key',
+    SSL_verify_mode => SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT,
+) or die "failed to listen: $!";
 
-$loop->add($handler);
-$handler->listen(
-   extensions => ['SSL'],
-   SSL_key_file => 'web.key',
-   SSL_cert_file => 'web.pem',
-   SSL_verify_mode => SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT,
-   SSL_ca_file => 'rootCA.pem',
-   host => '0.0.0.0',
-   service => 8000,
-   socktype => 'stream',
-   on_listen_error => sub { die $_[1] },
-   on_resolve_error => sub { die $_[1] },
-   on_listen => sub {
-      my $h = shift->read_handle;
-      print STDERR 'listening on ' . $h->sockhost . ':' . $h->sockport . "\n";
-   },
-);
-
-$loop->run
+# accept client
+my $client = $server->accept or die
+    "failed to accept or ssl handshake: $!,$SSL_ERROR";
